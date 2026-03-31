@@ -1,0 +1,35 @@
+{
+  "about": {
+    "name": "REZUL .PHOTOGRAPHY",
+    "title1": "Capturing",
+    "title2": "The World",
+    "description": "I’m a photographer who loves capturing real, meaningful moments. I focus on natural light, genuine emotions, and telling honest stories. I’m always exploring new ideas and perspectives to grow. I create images that feel real and truly connect with people.",
+    "email": "rezuloffice@gmail.com",
+    "location": "Coimbatore,Tamil Nadu",
+    "copyright": "© 2026 Rezul Photography. All rights reserved.",
+    "ownerPhoto": "owner_photo.png"
+  },
+  "images": [
+    {
+      "id": 1,
+      "src": "gallery_photo_1.png",
+      "title": "Majestic Peaks",
+      "description": "Sunset over the high altitude mountains highlighting the stark terrain naturally.",
+      "category": "Landscape"
+    },
+    {
+      "id": 2,
+      "src": "gallery_photo_2.png",
+      "title": "Urban Geometry",
+      "description": "A minimalist approach to modern architectural design with high contrast black and white expression.",
+      "category": "Architecture"
+    },
+    {
+      "id": 3,
+      "src": "gallery_photo_3.png",
+      "title": "Morning Dew",
+      "description": "Vibrant exotic flower details captured with a narrow depth of field in early morning light.",
+      "category": "Macro"
+    }
+  ]
+}
