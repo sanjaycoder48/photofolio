@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Admin() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [token, setToken] = useState(localStorage.getItem('adminToken') || null);
   const [password, setPassword] = useState('');
   
   const [about, setAbout] = useState(null);
@@ -21,16 +21,22 @@ export default function Admin() {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (token) {
       fetchCMSData();
     }
-  }, [isAuthenticated]);
+  }, [token]);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Default dummy password "admin123"
-    if (password === 'admin123') {
-      setIsAuthenticated(true);
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    const json = await res.json();
+    if (json.success) {
+      setToken(json.token);
+      localStorage.setItem('adminToken', json.token);
     } else {
       alert("Incorrect admin password.");
     }
@@ -39,7 +45,7 @@ export default function Admin() {
   const saveAbout = () => {
     fetch('/api/about', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify(about)
     })
     .then(res => res.json())
@@ -51,14 +57,22 @@ export default function Admin() {
     if (!file) return;
     const formData = new FormData();
     formData.append('image', file);
-    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const res = await fetch('/api/upload', { 
+      method: 'POST', 
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData 
+    });
+    if (!res.ok) return alert("Upload failed or not authorized");
     const json = await res.json();
     setAbout({ ...about, ownerPhoto: json.url });
   };
 
   const deletePhoto = (id) => {
     if(!confirm("Delete this photo?")) return;
-    fetch(`/api/images/${id}`, { method: 'DELETE' })
+    fetch(`/api/images/${id}`, { 
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
       .then(() => fetchCMSData());
   };
 
@@ -71,7 +85,12 @@ export default function Admin() {
     // First upload file
     const formData = new FormData();
     formData.append('image', newImage.file);
-    const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
+    const uploadRes = await fetch('/api/upload', { 
+      method: 'POST', 
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData 
+    });
+    if (!uploadRes.ok) return alert("Upload failed or not authorized");
     const uploadJson = await uploadRes.json();
     
     // Create new gallery
@@ -84,7 +103,7 @@ export default function Admin() {
     
     await fetch('/api/images', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify(imgData)
     });
     
@@ -93,7 +112,12 @@ export default function Admin() {
     fetchCMSData();
   };
 
-  if (!isAuthenticated) {
+  const handleLogout = () => {
+    setToken(null);
+    localStorage.removeItem('adminToken');
+  };
+
+  if (!token) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-100 font-sans">
         <form onSubmit={handleLogin} className="bg-white p-12 rounded-2xl shadow-xl flex flex-col gap-6 w-96">
@@ -117,7 +141,10 @@ export default function Admin() {
     <div className="min-h-screen bg-zinc-100 font-sans p-8 lg:p-16">
       <div className="flex justify-between items-center max-w-5xl mx-auto mb-12">
         <h1 className="text-4xl font-bold">CMS Admin Panel</h1>
-        <a href="/" className="text-blue-600 font-medium hover:underline">← Back to Site</a>
+        <div className="flex gap-4">
+          <button onClick={handleLogout} className="text-red-500 font-medium hover:underline">Log Out</button>
+          <a href="/" className="text-blue-600 font-medium hover:underline">← Back to Site</a>
+        </div>
       </div>
       
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">

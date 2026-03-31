@@ -4,6 +4,24 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const ADMIN_PASS = process.env.ADMIN_PASSWORD || 'admin123';
+const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_key_849204';
+
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (token == null) return res.status(401).json({ error: 'Not authorized' });
+  
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Token invalid or expired' });
+    req.user = user;
+    next();
+  });
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,8 +67,18 @@ app.get('/api/data', (req, res) => {
   }
 });
 
+// API: Login verification
+app.post('/api/login', (req, res) => {
+  if (req.body.password === ADMIN_PASS) {
+    const token = jwt.sign({ admin: true }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ success: true, token });
+  } else {
+    res.status(401).json({ error: 'Incorrect password' });
+  }
+});
+
 // API: Update About section
-app.post('/api/about', (req, res) => {
+app.post('/api/about', authenticateToken, (req, res) => {
   try {
     const data = readData();
     data.about = { ...data.about, ...req.body };
@@ -62,7 +90,7 @@ app.post('/api/about', (req, res) => {
 });
 
 // API: Upload an image file (either gallery or owner portrait)
-app.post('/api/upload', upload.single('image'), (req, res) => {
+app.post('/api/upload', authenticateToken, upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
@@ -71,7 +99,7 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
 });
 
 // API: Add a new gallery photo
-app.post('/api/images', (req, res) => {
+app.post('/api/images', authenticateToken, (req, res) => {
   try {
     const data = readData();
     const newImage = {
@@ -90,7 +118,7 @@ app.post('/api/images', (req, res) => {
 });
 
 // API: Delete a gallery photo
-app.delete('/api/images/:id', (req, res) => {
+app.delete('/api/images/:id', authenticateToken, (req, res) => {
   try {
     const data = readData();
     const id = parseInt(req.params.id);
@@ -107,7 +135,7 @@ const PORT = process.env.PORT || 5000;
 // Serve the Vite React App in production
 app.use(express.static(path.join(__dirname, 'dist')));
 
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 

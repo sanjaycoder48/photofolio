@@ -11,7 +11,7 @@ const PhotoCard = ({ src, title, description, category }) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 0.6 }}
-      className="relative group overflow-hidden rounded-2xl bg-zinc-200 aspect-[4/5] cursor-pointer shadow-lg"
+      className="relative group overflow-hidden rounded-2xl bg-zinc-200 aspect-4/5 cursor-pointer shadow-lg"
     >
       <img
         src={src.startsWith('http') || src.startsWith('/uploads/') ? src : `/${src}`}
