@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Mail, MapPin, Camera, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import fallbackData from '../data.json';
 
 const PhotoCard = ({ src, title, description, category }) => {
   return (
@@ -35,18 +36,21 @@ export default function Portfolio() {
   const { scrollYProgress } = useScroll();
   const headerOpacity = useTransform(scrollYProgress, [0, 0.05], [1, 0]);
 
-  const [data, setData] = useState({ about: null, images: [] });
+  const [data, setData] = useState({ about: fallbackData.about, images: fallbackData.images });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/data')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('API down');
+        return res.json();
+      })
       .then(json => {
-        setData(json);
+        if (json && json.about) setData(json);
         setLoading(false);
       })
       .catch(err => {
-        console.error("Failed to load CMS data. Ensure server is running.", err);
+        console.error("Using fallback CMS data.", err);
         setLoading(false);
       });
   }, []);

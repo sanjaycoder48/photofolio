@@ -30,16 +30,26 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve uploaded files statically
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
-const DATA_FILE = path.join(__dirname, 'data.json');
+// Ensure uploads directory exists (use /tmp on Vercel)
+const UPLOADS_DIR = process.env.VERCEL ? '/tmp/uploads' : path.join(__dirname, 'public/uploads');
+const DATA_FILE = process.env.VERCEL ? '/tmp/data.json' : path.join(process.cwd(), 'data.json');
 
-// Ensure uploads directory exists
-const UPLOADS_DIR = path.join(__dirname, 'public/uploads');
+// Copy initial data to /tmp if on vercel and it doesn't exist yet
+if (process.env.VERCEL && !fs.existsSync('/tmp/data.json')) {
+  try {
+    fs.copyFileSync(path.join(process.cwd(), 'data.json'), '/tmp/data.json');
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(UPLOADS_DIR));
 
 // Multer storage for uploads
 const storage = multer.diskStorage({
@@ -139,6 +149,10 @@ app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`CMS Backend running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`CMS Backend running on port ${PORT}`);
+  });
+}
+
+export default app;
