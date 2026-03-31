@@ -50,6 +50,10 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(UPLOADS_DIR));
+if (process.env.VERCEL) {
+  // Fallback to static pre-deployed public uploads if not found in /tmp
+  app.use('/uploads', express.static(path.join(process.cwd(), 'dist', 'uploads')));
+}
 
 // Multer storage for uploads
 const storage = multer.diskStorage({

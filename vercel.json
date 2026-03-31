@@ -13,18 +13,22 @@
       }
     }
   ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/server.js"
-    },
-    {
-      "src": "/uploads/(.*)",
-      "dest": "/server.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ]
+  "rewrites": {
+    "beforeFiles": [
+      {
+        "source": "/api/(.*)",
+        "destination": "/server.js"
+      },
+      {
+        "source": "/uploads/(.*)",
+        "destination": "/server.js"
+      }
+    ],
+    "fallback": [
+      {
+        "source": "/(.*)",
+        "destination": "/index.html"
+      }
+    ]
+  }
 }
